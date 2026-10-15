@@ -916,6 +916,23 @@ ensureToday();render();
  #salesPage #card-drinks .pay .b,#salesPage #card-drinks .pay .t,#salesPage #card-drinks .pay .kk{grid-row:1!important;height:clamp(54px,9dvh,90px)!important;min-height:0!important}
  #salesPage .lily-divider{top:8%;height:84%;right:-24px}
 }
+
+/* Foodtruck: schmalere Zahlungskarten und mehr Abstand zwischen Artikelspalten. */
+#salesPage .card:not(#card-drinks) .pay{width:88%;align-self:center;column-gap:12px!important}
+#salesPage .grid{column-gap:48px!important}
+#salesPage .lower-row{column-gap:44px!important}
+#salesPage #card-drinks .pay{grid-template-columns:repeat(3,72px)!important}
+@media screen and (min-width:600px) and (max-width:1366px){
+ #salesPage .grid{column-gap:40px!important}
+ #salesPage .lower-row{column-gap:40px!important}
+ #salesPage #card-drinks .pay{grid-template-columns:repeat(3,70px)!important}
+}
+@media(max-width:600px){
+ #salesPage .grid{column-gap:24px!important}
+ #salesPage .lower-row{column-gap:24px!important}
+ #salesPage .card:not(#card-drinks) .pay{width:94%;column-gap:6px!important}
+ #salesPage #card-drinks .pay{grid-template-columns:repeat(3,48px)!important}
+}
 </style>
 
 
