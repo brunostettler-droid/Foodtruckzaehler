@@ -933,6 +933,12 @@ ensureToday();render();
  #salesPage .card:not(#card-drinks) .pay{width:94%;column-gap:6px!important}
  #salesPage #card-drinks .pay{grid-template-columns:repeat(3,48px)!important}
 }
+
+/* Foodtruck: Getränke und Zahlungskarten als gemeinsam zentrierte Zeile. */
+#salesPage #card-drinks{grid-template-columns:max-content auto!important;grid-template-rows:auto auto auto auto!important;align-items:center!important;justify-self:center!important;transform:none!important;top:0!important;gap:2px 24px!important}
+#salesPage #card-drinks .pay{grid-template-rows:auto!important;align-self:center!important;transform:none!important}
+#salesPage #card-drinks .pay .b,#salesPage #card-drinks .pay .t,#salesPage #card-drinks .pay .kk{grid-row:1!important}
+#salesPage #card-drinks h2{align-self:end!important}
 </style>
 
 
