@@ -942,6 +942,14 @@ ensureToday();render();
 
 /* Getränkebeschriftung etwas tiefer. */
 #salesPage #card-drinks h2{position:relative;top:10px}
+
+/* Foodtruck: Stück- und Umsatztotale besser lesbar. */
+#salesPage .card:not(#card-drinks) .count{font-size:46px!important;line-height:1.05!important}
+#salesPage .card:not(#card-drinks) .revenue{font-size:19px!important;font-weight:700}
+@media screen and (min-width:600px) and (max-width:1366px){
+ #salesPage .card:not(#card-drinks) .count{font-size:clamp(30px,4.2dvh,43px)!important}
+ #salesPage .card:not(#card-drinks) .revenue{font-size:17px!important}
+}
 </style>
 
 
