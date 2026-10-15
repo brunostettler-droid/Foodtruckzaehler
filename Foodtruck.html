@@ -600,7 +600,6 @@ header h1{font-size:22px!important}
 
 <main id="salesPage">
   <div class="grid" id="menuGrid">
-<button id="halfMenuToggle" type="button" aria-pressed="false" onclick="toggleHalfMenus()">1/2-Menus</button>
 <div class="card" id="card-m1"><h2>P</h2><div class="price">Fr. 15.–</div><div class="count">0</div><div class="pay"><button class="b">B</button><button class="t">TW</button><button class="kk">KK</button></div></div><div class="card" id="card-m2"><h2>R</h2><div class="price">Fr. 15.–</div><div class="count">0</div><div class="pay"><button class="b">B</button><button class="t">TW</button><button class="kk">KK</button></div></div>
 <div class="card" id="card-m3"><h2>V</h2><div class="price">Fr. 15.–</div><div class="count">0</div><div class="pay"><button class="b">B</button><button class="t">TW</button><button class="kk">KK</button></div></div>
 <div class="card" id="card-drinks"></div>
@@ -681,10 +680,9 @@ const PAY={B:"Bar",T:"TWINT",KK:"Kreditkarte"};
 const KEY="tfk_foodtruck_v1";
 let db=load();
 
-let halfMenuMode=false;
+
 const isMainMenu=id=>['m1','m2','m3'].includes(id);
-function sellingPrice(m){return halfMenuMode&&isMainMenu(m.id)?10:m.price}
-function toggleHalfMenus(){halfMenuMode=!halfMenuMode;render()}
+function sellingPrice(m){return m.price}
 function paidHalfCount(day){return (day.transactions||[]).filter(t=>t.halfMenu===true&&isMainMenu(t.id)&&['B','T','KK'].includes(t.pay)).length}
 
 function localDate(d=new Date()){let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
@@ -731,7 +729,7 @@ function dayStats(day){let pc={B:0,T:0,KK:0},pr={B:0,T:0,KK:0},count=0,revenue=0
 }
 function book(id,pay){
  let day=ensureToday(); if(day.closed && !confirm("Dieser Tag wurde abgeschlossen. Trotzdem buchen?"))return;
- let m=MENUS.find(x=>x.id===id);day.menus[id][pay]=(day.menus[id][pay]||0)+1;day.transactions.push({id,pay,price:(pay==="L"||pay==="H")?0:sellingPrice(m),halfMenu:halfMenuMode&&isMainMenu(id)&&['B','T','KK'].includes(pay),time:new Date().toISOString()});if(isMainMenu(id)&&["B","T","KK"].includes(pay))halfMenuMode=false;save();render();
+ let m=MENUS.find(x=>x.id===id);day.menus[id][pay]=(day.menus[id][pay]||0)+1;day.transactions.push({id,pay,price:(pay==="L"||pay==="H")?0:sellingPrice(m),time:new Date().toISOString()});save();render();
 }
 function undoLast(){
  let day=ensureToday(),t=day.transactions.pop();if(!t){alert("Keine Buchung zum Rückgängigmachen.");return}
@@ -750,8 +748,7 @@ function printDayReport(date,day){
  <h1>Thai Food Kurier</h1><h2>Tagesabschluss · ${date.split('-').reverse().join('.')}</h2>
  <table><thead><tr><th>Artikel</th><th>Stück</th><th>Umsatz</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td><td>${totals.count}</td><td>${money(totals.revenue)}</td></tr></tfoot></table>
  <h3>Zahlungsarten</h3><table><thead><tr><th>Zahlungsart</th><th>Buchungen</th><th>Betrag</th></tr></thead><tbody>${payments}</tbody><tfoot><tr><td>Total bezahlt</td><td>${totals.pc.B+totals.pc.T+totals.pc.KK}</td><td>${money(totals.revenue)}</td></tr></tfoot></table>
- <h3>Halbe Menüs</h3>
- <p>½ Menüs à Fr. 10.–: <strong>${paidHalfCount(day)}</strong></p>`;
+`;
  window.print();
 }
 function transactionLabel(t){
@@ -796,7 +793,7 @@ function renderUndo(day){
 function render(){
  let day=ensureToday();document.getElementById("date").textContent=new Date().toLocaleDateString("de-CH",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+(day.closed?" · abgeschlossen":"");
  MENUS.forEach(m=>{let st=menuStats(day,m);let c=document.getElementById("card-"+m.id);
- if(c && m.id!=="loyalty")c.innerHTML=`<h2>${m.name}</h2><div class="price ${halfMenuMode&&isMainMenu(m.id)?'half-active':''}">${halfMenuMode&&isMainMenu(m.id)?'½ Menü · ':''}${money(sellingPrice(m))}</div><div class="count">${st.count}</div><div class="revenue">${money(st.revenue)}</div>
+ if(c && m.id!=="loyalty")c.innerHTML=`<h2>${m.name}</h2><div class="price">${money(sellingPrice(m))}</div><div class="count">${st.count}</div><div class="revenue">${money(st.revenue)}</div>
  <div class="pay">${["B","T","KK"].map(p=>`<button class="${p==="B"?"b":p==="T"?"t":"kk"}" onclick="book('${m.id}','${p}')">${p==="T"?"TW":p}<span class="mini">${st.x[p]}×</span></button>`).join("")}</div>`;});
  let s=dayStats(day);
  document.getElementById("allCount").textContent=s.count;
@@ -804,8 +801,6 @@ function render(){
  document.getElementById("barTotal").textContent=`${s.pc.B} · ${money(s.pr.B)}`;
  document.getElementById("twintTotal").textContent=`${s.pc.T} · ${money(s.pr.T)}`;
  document.getElementById("cardTotal").textContent=`${s.pc.KK} · ${money(s.pr.KK)}`;
- const halfButton=document.getElementById('halfMenuToggle');
- halfButton.setAttribute('aria-pressed',String(halfMenuMode));
  renderUndo(day);renderLilies();updateMonths();renderJournal();
 }
 function updateMonths(){
@@ -817,9 +812,9 @@ function renderJournal(){
  let month=document.getElementById("monthSelect").value||localDate().slice(0,7),days=Object.keys(db.days).filter(d=>d.startsWith(month)).sort(),tot={count:0,half:0,paidHalf:0,rev:0,B:0,T:0,KK:0,Br:0,Tr:0,KKr:0},menuTot={};MENUS.forEach(m=>menuTot[m.id]=0);
  let rows=days.map(k=>{let d=db.days[k],s=dayStats(d);tot.count+=s.count;tot.half+=halfMenuCount(d);tot.paidHalf+=paidHalfCount(d);tot.rev+=s.revenue;["B","T","KK"].forEach(p=>{tot[p]+=s.pc[p]});tot.Br+=s.pr.B;tot.Tr+=s.pr.T;tot.KKr+=s.pr.KK;
  let ms=MENUS.map(m=>{let z=menuStats(d,m);menuTot[m.id]+=z.count;return `<td>${z.count}</td>`}).join("");
- return `<tr><td>${k.split("-").reverse().join(".")}</td>${ms}<td>${paidHalfCount(d)}</td><td>${s.pc.B} / ${money(s.pr.B)}</td><td>${s.pc.T} / ${money(s.pr.T)}</td><td>${s.pc.KK} / ${money(s.pr.KK)}</td><td><b>${s.count}</b></td><td><b>${money(s.revenue)}</b></td></tr>`}).join("");
+ return `<tr><td>${k.split("-").reverse().join(".")}</td>${ms}<td>${s.pc.B} / ${money(s.pr.B)}</td><td>${s.pc.T} / ${money(s.pr.T)}</td><td>${s.pc.KK} / ${money(s.pr.KK)}</td><td><b>${s.count}</b></td><td><b>${money(s.revenue)}</b></td></tr>`}).join("");
  let heads=MENUS.map(m=>`<th>${m.name}</th>`).join(""),foots=MENUS.map(m=>`<td>${menuTot[m.id]}</td>`).join("");
- document.getElementById("journalTable").innerHTML=`<table><thead><tr><th>Datum</th>${heads}<th>davon ½ Menüs à Fr. 10.–</th><th>Bar</th><th>TWINT</th><th>KK</th><th>Stück</th><th>Umsatz</th></tr></thead><tbody>${rows||'<tr><td colspan="16">Noch keine Buchungen.</td></tr>'}</tbody><tfoot><tr><td>Monat total</td>${foots}<td>${tot.paidHalf}</td><td>${tot.B} / ${money(tot.Br)}</td><td>${tot.T} / ${money(tot.Tr)}</td><td>${tot.KK} / ${money(tot.KKr)}</td><td>${tot.count}</td><td>${money(tot.rev)}</td></tr></tfoot></table>`;
+ document.getElementById("journalTable").innerHTML=`<table><thead><tr><th>Datum</th>${heads}<th>Bar</th><th>TWINT</th><th>KK</th><th>Stück</th><th>Umsatz</th></tr></thead><tbody>${rows||'<tr><td colspan="16">Noch keine Buchungen.</td></tr>'}</tbody><tfoot><tr><td>Monat total</td>${foots}<td>${tot.B} / ${money(tot.Br)}</td><td>${tot.T} / ${money(tot.Tr)}</td><td>${tot.KK} / ${money(tot.KKr)}</td><td>${tot.count}</td><td>${money(tot.rev)}</td></tr></tfoot></table>`;
 }
 async function exportBackup(){
  try{
@@ -862,9 +857,9 @@ function importBackup(ev){
 }
 function exportCSV(){
  let month=document.getElementById("monthSelect").value||localDate().slice(0,7),days=Object.keys(db.days).filter(d=>d.startsWith(month)).sort();
- let header=["Datum",...MENUS.map(m=>m.name),"davon ½ Menüs à Fr. 10.–","Bar Stück","Bar CHF","TWINT Stück","TWINT CHF","KK Stück","KK CHF","Total Stück","Total CHF"];
+ let header=["Datum",...MENUS.map(m=>m.name),"Bar Stück","Bar CHF","TWINT Stück","TWINT CHF","KK Stück","KK CHF","Total Stück","Total CHF"];
  let lines=[header.join(";")];
- days.forEach(k=>{let d=db.days[k],s=dayStats(d),vals=[k,...MENUS.map(m=>menuStats(d,m).count),paidHalfCount(d),s.pc.B,s.pr.B.toFixed(2),s.pc.T,s.pr.T.toFixed(2),s.pc.KK,s.pr.KK.toFixed(2),s.count,s.revenue.toFixed(2)];lines.push(vals.join(";"))});
+ days.forEach(k=>{let d=db.days[k],s=dayStats(d),vals=[k,...MENUS.map(m=>menuStats(d,m).count),s.pc.B,s.pr.B.toFixed(2),s.pc.T,s.pr.T.toFixed(2),s.pc.KK,s.pr.KK.toFixed(2),s.count,s.revenue.toFixed(2)];lines.push(vals.join(";"))});
  let blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`Foodtruck-Journal-${month}.csv`;a.click();URL.revokeObjectURL(a.href);
 }
 ensureToday();render();
