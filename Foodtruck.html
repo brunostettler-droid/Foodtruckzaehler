@@ -744,16 +744,19 @@ function bookingFeedback(id){
   const ctx=bookingAudioContext;
   const play=()=>{
    const now=ctx.currentTime;
-   [1046.5,1568].forEach((frequency,index)=>{
+   // Tiefer Gong mit leise ausklingenden, leicht unharmonischen Obertönen.
+   const master=ctx.createGain();master.gain.value=.55;master.connect(ctx.destination);
+   [[130.81,.34,2.2],[202.75,.14,1.7],[351.88,.065,1.2],[563.8,.025,.8]].forEach(([frequency,volume,duration])=>{
     const oscillator=ctx.createOscillator(),gain=ctx.createGain();
-    oscillator.type='sine';oscillator.frequency.value=frequency;
-    const start=now+index*.045;
-    gain.gain.setValueAtTime(0,start);
-    gain.gain.linearRampToValueAtTime(.14,start+.008);
-    gain.gain.exponentialRampToValueAtTime(.001,start+.38);
-    oscillator.connect(gain);gain.connect(ctx.destination);
-    oscillator.start(start);oscillator.stop(start+.4);
+    oscillator.type='sine';oscillator.frequency.setValueAtTime(frequency*1.012,now);
+    oscillator.frequency.exponentialRampToValueAtTime(frequency,now+.25);
+    gain.gain.setValueAtTime(0,now);
+    gain.gain.linearRampToValueAtTime(volume,now+.012);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    oscillator.connect(gain);gain.connect(master);
+    oscillator.start(now);oscillator.stop(now+duration+.02);
    });
+   setTimeout(()=>master.disconnect(),2400);
   };
   if(ctx.state==='suspended')ctx.resume().then(play).catch(()=>{});else play();
  }catch(e){/* Visuelle Rückmeldung bleibt auch ohne Audio verfügbar. */}
