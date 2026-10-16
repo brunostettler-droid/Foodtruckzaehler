@@ -728,9 +728,9 @@ function dayStats(day){let pc={B:0,T:0,KK:0},pr={B:0,T:0,KK:0},count=0,revenue=0
  return {pc,pr,count,revenue}
 }
 let bookingAudioContext;
-function bookingFeedback(id){
+function bookingFeedback(id,mode="both"){
  const total=document.querySelector('#card-'+id+' .count');
- if(total){
+ if(total && mode!=="sound"){
   total.classList.remove('booking-flash');
   void total.offsetWidth;
   total.classList.add('booking-flash');
@@ -738,14 +738,15 @@ function bookingFeedback(id){
   total.addEventListener('animationend',()=>total.classList.remove('booking-flash'),{once:true});
  }
  try{
+  if(mode==="visual")return;
   const AudioContextClass=window.AudioContext||window.webkitAudioContext;
   if(!AudioContextClass)return;
-  bookingAudioContext=bookingAudioContext||new AudioContextClass();
+  bookingAudioContext=bookingAudioContext||new AudioContextClass({latencyHint:"interactive"});
   const ctx=bookingAudioContext;
   const play=()=>{
    const now=ctx.currentTime;
    // Helles Glöckchen mit sanft ausklingenden Obertönen.
-   const master=ctx.createGain();master.gain.value=.675;master.connect(ctx.destination);
+   const master=ctx.createGain();master.gain.value=1.0;master.connect(ctx.destination);
    [[1567.98,.28,1.5],[3135.96,.10,1.0],[4233.55,.045,.7],[6115.12,.018,.45]].forEach(([frequency,volume,duration])=>{
     const oscillator=ctx.createOscillator(),gain=ctx.createGain();
     oscillator.type='sine';oscillator.frequency.setValueAtTime(frequency*1.002,now);
@@ -763,7 +764,8 @@ function bookingFeedback(id){
 }
 function book(id,pay){
  let day=ensureToday(); if(day.closed && !confirm("Dieser Tag wurde abgeschlossen. Trotzdem buchen?"))return;
- let m=MENUS.find(x=>x.id===id);day.menus[id][pay]=(day.menus[id][pay]||0)+1;day.transactions.push({id,pay,price:(pay==="L"||pay==="H")?0:sellingPrice(m),time:new Date().toISOString()});save();render();bookingFeedback(id);
+ bookingFeedback(id,"sound");
+ let m=MENUS.find(x=>x.id===id);day.menus[id][pay]=(day.menus[id][pay]||0)+1;day.transactions.push({id,pay,price:(pay==="L"||pay==="H")?0:sellingPrice(m),time:new Date().toISOString()});save();render();bookingFeedback(id,"visual");
 }
 function undoLast(){
  let day=ensureToday(),t=day.transactions.pop();if(!t){alert("Keine Buchung zum Rückgängigmachen.");return}
